@@ -17,7 +17,13 @@
 
 <body>
     <div class="container">
+        <input type="file" id="thefile" accept="audio/*" />
+        <audio id="audio" controls></audio>
+        <video id="video" autoplay="true"></video>
+        <!-- <canvas id="canvasVideo" width='1024' height='768' style='width:1024px; height: 768px;'></canvas> -->
         <canvas id='canvasContainer' width='1024' height='768' style='width:1024px; height: 768px;'></canvas>
+        <canvas id="canvas"></canvas>
+        <svg id="circleContainer" width="1024" height="1024"></svg>
     </div>
 </body>
 

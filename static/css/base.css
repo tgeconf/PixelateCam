@@ -121,3 +121,7 @@ a:focus {
 		justify-content: center;
 	}
 }
+
+video{
+	display: none;
+}
