@@ -50,7 +50,7 @@ export default class Circle {
         this.y = y;
         this.z = z;
         this.r = r;
-        this.life = 300;
+        this.life = 500;
         this.clock = 0;
         this.xSpeed = Math.random();
         this.ySpeed = Math.random();
@@ -64,7 +64,7 @@ export default class Circle {
 
     init(pushing, addBlur = false) {
         this.destination = { x: Math.random() * Circle.containerW, y: Math.random() * Circle.containerH / 2 };
-        this.ctrl = { x: this.destination.x, y: this.y };
+        this.ctrl = { x: this.destination.x, y: (this.y + this.destination.y) / 2 };
         this.circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         this.circle.setAttributeNS(null, 'cx', this.x);
         this.circle.setAttributeNS(null, 'cy', this.y);

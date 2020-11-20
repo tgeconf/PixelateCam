@@ -10,6 +10,7 @@ export default class App {
         this.hiddenCanvas;
         this.targetCanvas;
         this.binW = 32;
+        this.currentVol = 0;
     }
 
     init() {
@@ -22,7 +23,7 @@ export default class App {
         // this.pixelateCanvas();
         var file = document.getElementById("thefile");
         var audio = document.getElementById("audio");
-
+        const that = this;
         file.onchange = function () {
             var files = this.files;
             audio.src = URL.createObjectURL(files[0]);
@@ -53,9 +54,10 @@ export default class App {
 
             Circle.initBigCircle();
 
-            let timeGap = Math.random() * 60 + 100;
+            let timeGap = Math.random() * 60 + 30;
             let count = 0;
-            const colors = ['#412089', '#182a80', '#09308d', '#15479c', '#1165ab', '#2085b3', '#13b4a4', '#2faa38', '#3ab035', '#78bc27', '#afd029', '#f2e928', '#f5b61b', '#ef8317', '#ee6d19', '#e94e18', '#e72019', '#e30f26'];
+            // const colors = ['#412089', '#182a80', '#09308d', '#15479c', '#1165ab', '#2085b3', '#13b4a4', '#2faa38', '#3ab035', '#78bc27', '#afd029', '#f2e928', '#f5b61b', '#ef8317', '#ee6d19', '#e94e18', '#e72019', '#e30f26'];
+            const colors = [[65, 32, 137], [17, 101, 171], [58, 176, 53], [245, 182, 27], [231, 32, 25]];
             function renderFrame() {
                 requestAnimationFrame(renderFrame);
 
@@ -99,22 +101,40 @@ export default class App {
                 Circle.updateAll();
                 count++;
 
+                let sum = 0;
                 if (count > timeGap) {
                     timeGap = Math.random() * 60 + 100;
                     count = 0;
 
-                    // console.log('poping');
                     dataArray = dataArray.sort().reverse();
-                    const thr = 160;
+                    const thr = 120;
                     for (let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                    for (let i = 0; i < bufferLength; i++) {
+                        let colorIdx = Math.floor(4 * sum / bufferLength / 128);
+                        if (colorIdx > 4) {
+                            colorIdx = 4;
+                        }
+                        console.log(sum / bufferLength, colorIdx);
+                        const [h, s, l] = that.rgbToHsl(colors[colorIdx]);
+                        // [targetR, targetG, targetB] = hslToRgb([h, s, l]);
                         if (dataArray[i] >= thr) {
                             let r = Circle.dynamicRScale(dataArray[i], [thr, dataArray[0]]);
-                            // console.log('adding', r, colors[i], i);
-                            let c = new Circle(Circle.bigCircle.x, Circle.bigCircle.y, 6, r, colors[i]);
+                            let targetColor = that.hslToRgb([h, s, l]);
+                            l += 0.02;
+                            let c = new Circle(Circle.bigCircle.x, Circle.bigCircle.y, 6, r, 'rgb(' + targetColor[0] + ',' + targetColor[1] + ',' + targetColor[2] + ')');
                             c.init(true, i !== 0);
                         }
                     }
                 }
+                else {
+                    for (let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                }
+                sum /= bufferLength;
+                that.currentVol = sum;
             }
 
             audio.play();
@@ -137,6 +157,55 @@ export default class App {
         this.hiddenCanvas.height = this.height;
         this.hiddenCanvas.style.display = 'none';
         document.body.appendChild(this.hiddenCanvas);
+    }
+
+    rgbToHsl(rgb) {
+        let [r, g, b] = rgb;
+        r /= 255, g /= 255, b /= 255;
+        let max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max == min) {
+            h = s = 0; // achromatic
+        } else {
+            let d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        return [h, s, l];
+    }
+
+    hslToRgb(hsl) {
+        const h = hsl[0];
+        const s = hsl[1];
+        const l = hsl[2];
+        var r, g, b;
+
+        if (s == 0) {
+            r = g = b = l; // achromatic
+        } else {
+            var hue2rgb = function hue2rgb(p, q, t) {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            }
+
+            var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            var p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1 / 3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1 / 3);
+        }
+
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
     }
 
     loadCameraOnHidden() {
@@ -174,54 +243,6 @@ export default class App {
                     height: dstSize.width / srcRatio
                 };
             }
-        }
-
-        function rgbToHsl(rgb) {
-            let [r, g, b] = rgb;
-            r /= 255, g /= 255, b /= 255;
-            let max = Math.max(r, g, b), min = Math.min(r, g, b);
-            let h, s, l = (max + min) / 2;
-
-            if (max == min) {
-                h = s = 0; // achromatic
-            } else {
-                let d = max - min;
-                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                    case g: h = (b - r) / d + 2; break;
-                    case b: h = (r - g) / d + 4; break;
-                }
-                h /= 6;
-            }
-            return [h, s, l];
-        }
-        function hslToRgb(hsl) {
-            const h = hsl[0];
-            const s = hsl[1];
-            const l = hsl[2];
-            var r, g, b;
-
-            if (s == 0) {
-                r = g = b = l; // achromatic
-            } else {
-                var hue2rgb = function hue2rgb(p, q, t) {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1 / 6) return p + (q - p) * 6 * t;
-                    if (t < 1 / 2) return q;
-                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                    return p;
-                }
-
-                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                var p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1 / 3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1 / 3);
-            }
-
-            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
         }
 
         function renderFrame() {
@@ -264,18 +285,21 @@ export default class App {
                         let targetR = colorRecord.r / count;
                         let targetG = colorRecord.g / count;
                         let targetB = colorRecord.b / count;
-                        // if (Math.abs(targetR - targetG) < 10 && Math.abs(targetR - targetB) < 10 && targetR > thr) {
-                        //     const diff = targetR - thr;
-                        //     targetR -= diff;
-                        //     targetG -= diff;
-                        //     targetB -= diff;
-                        // }
-                        const [h, s, l] = rgbToHsl([targetR, targetG, targetB]);
-                        l = l * 0.3;
-                        [targetR, targetG, targetB] = hslToRgb([h, s, l]);
-                        let gray = (0.2126 * targetR + 0.7152 * targetG + 0.0722 * targetB);
-                        let grayRange = [20, 80];
-                        gray = (gray / 255) * (grayRange[1] - grayRange[0]) + grayRange[0];
+
+                        const [h, s, l] = that.rgbToHsl([targetR, targetG, targetB]);
+                        const lRange = [0.1, 0.7];
+                        const volDomain = [10, 100];
+                        if (that.currentVol < 10) {
+                            that.currentVol = 10;
+                        } else if (that.currentVol > 100) {
+                            that.currentVol = 100;
+                        }
+                        let lScale = lRange[0] + (lRange[1] - lRange[0]) * (that.currentVol - volDomain[0]) / (volDomain[1] - volDomain[0])
+                        l = l * lScale;
+                        [targetR, targetG, targetB] = that.hslToRgb([h, s, l]);
+                        // let gray = (0.2126 * targetR + 0.7152 * targetG + 0.0722 * targetB);
+                        // let grayRange = [20, 80];
+                        // gray = (gray / 255) * (grayRange[1] - grayRange[0]) + grayRange[0];
                         targetCtx.fillStyle = 'rgba(' + targetR + ',' + targetG + ',' + targetB + ', 0.7)';
                         targetCtx.fill();
                         targetCtx.closePath();
