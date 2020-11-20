@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Interactive Particles | Codrops</title>
+    <meta name="description"
+        content="Demo of a tutorial on how to draw a large number of particles with Three.js and make them interactive." />
+    <meta name="keywords" content="three.js, tutorial, particles, interactive, javascript, webgl" />
+    <meta name="author" content="Bruno Imbrizi for Codrops" />
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" type="text/css" href="css/base.css" />
+    <script>document.documentElement.className = "js"; var supportsCssVars = function () { var e, t = document.createElement("style"); return t.innerHTML = "root: { --tmp-var: bold; }", document.head.appendChild(t), e = !!(window.CSS && window.CSS.supports && window.CSS.supports("font-weight", "var(--tmp-var)")), t.parentNode.removeChild(t), e }; supportsCssVars() || alert("Please view this demo in a modern browser that supports CSS Variables.");</script>
+</head>
+
+<body>
+    <div class="container">
+        <input type="file" id="thefile" accept="audio/*" />
+        <audio id="audio" controls></audio>
+        <video id="video" autoplay="true"></video>
+        <!-- <canvas id="canvasVideo" width='1024' height='768' style='width:1024px; height: 768px;'></canvas> -->
+        <canvas id='canvasContainer' width='1024' height='768' style='width:1024px; height: 768px;'></canvas>
+        <canvas id="canvas"></canvas>
+        <svg id="circleContainer" width="1024" height="768">
+            <filter id="blur1">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+            </filter>
+            <filter id="blur2">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+            </filter>
+            <filter id="blur3">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="1" />
+            </filter>
+        </svg>
+    </div>
+<script type="text/javascript" src="scripts/index.14378c2830f8883b646a.js"></script></body>
+
+</html>
