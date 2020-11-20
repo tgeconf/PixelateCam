@@ -55,7 +55,7 @@ export default class App {
 
             let timeGap = Math.random() * 60 + 100;
             let count = 0;
-
+            const colors = ['#412089', '#182a80', '#09308d', '#15479c', '#1165ab', '#2085b3', '#13b4a4', '#2faa38', '#3ab035', '#78bc27', '#afd029', '#f2e928', '#f5b61b', '#ef8317', '#ee6d19', '#e94e18', '#e72019', '#e30f26'];
             function renderFrame() {
                 requestAnimationFrame(renderFrame);
 
@@ -105,12 +105,14 @@ export default class App {
 
                     // console.log('poping');
                     dataArray = dataArray.sort().reverse();
-
-                    for (let i = 0; i < bufferLength && i < 5; i++) {
-                        let r = Circle.dynamicRScale(dataArray[i], [dataArray[5], dataArray[0]]);
-                        // console.log('adding', r);
-                        let c = new Circle(Circle.bigCircle.x, Circle.bigCircle.y, 6, r);
-                        c.init(true);
+                    const thr = 160;
+                    for (let i = 0; i < bufferLength; i++) {
+                        if (dataArray[i] >= thr) {
+                            let r = Circle.dynamicRScale(dataArray[i], [thr, dataArray[0]]);
+                            // console.log('adding', r, colors[i], i);
+                            let c = new Circle(Circle.bigCircle.x, Circle.bigCircle.y, 6, r, colors[i]);
+                            c.init(true, i !== 0);
+                        }
                     }
                 }
             }
@@ -133,6 +135,7 @@ export default class App {
         this.hiddenCanvas = document.createElement('canvas');
         this.hiddenCanvas.width = this.width;
         this.hiddenCanvas.height = this.height;
+        this.hiddenCanvas.style.display = 'none';
         document.body.appendChild(this.hiddenCanvas);
     }
 
@@ -173,6 +176,54 @@ export default class App {
             }
         }
 
+        function rgbToHsl(rgb) {
+            let [r, g, b] = rgb;
+            r /= 255, g /= 255, b /= 255;
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max == min) {
+                h = s = 0; // achromatic
+            } else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [h, s, l];
+        }
+        function hslToRgb(hsl) {
+            const h = hsl[0];
+            const s = hsl[1];
+            const l = hsl[2];
+            var r, g, b;
+
+            if (s == 0) {
+                r = g = b = l; // achromatic
+            } else {
+                var hue2rgb = function hue2rgb(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1 / 6) return p + (q - p) * 6 * t;
+                    if (t < 1 / 2) return q;
+                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                    return p;
+                }
+
+                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                var p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1 / 3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1 / 3);
+            }
+
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
         function renderFrame() {
             requestAnimationFrame(renderFrame);
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -186,7 +237,7 @@ export default class App {
 
                 targetCtx.fillStyle = '#000';
                 targetCtx.fillRect(0, 0, that.width, that.height);
-                console.log(that.width, that.height);
+                // targetCtx.globalAlpha = 0.01;
                 const binRows = Math.ceil(that.height / that.binW);
                 const binCols = Math.ceil(that.width / that.binW);
                 let maxIdx = 0;
@@ -210,7 +261,22 @@ export default class App {
 
                         targetCtx.beginPath();
                         targetCtx.arc(j * that.binW + that.binW / 2, i * that.binW + that.binW / 2, that.binW / 2, 0, 2 * Math.PI, false);
-                        targetCtx.fillStyle = 'rgb(' + (colorRecord.r / count) + ',' + (colorRecord.g / count) + ',' + (colorRecord.b / count) + ')';
+                        let targetR = colorRecord.r / count;
+                        let targetG = colorRecord.g / count;
+                        let targetB = colorRecord.b / count;
+                        // if (Math.abs(targetR - targetG) < 10 && Math.abs(targetR - targetB) < 10 && targetR > thr) {
+                        //     const diff = targetR - thr;
+                        //     targetR -= diff;
+                        //     targetG -= diff;
+                        //     targetB -= diff;
+                        // }
+                        const [h, s, l] = rgbToHsl([targetR, targetG, targetB]);
+                        l = l * 0.3;
+                        [targetR, targetG, targetB] = hslToRgb([h, s, l]);
+                        let gray = (0.2126 * targetR + 0.7152 * targetG + 0.0722 * targetB);
+                        let grayRange = [20, 80];
+                        gray = (gray / 255) * (grayRange[1] - grayRange[0]) + grayRange[0];
+                        targetCtx.fillStyle = 'rgba(' + targetR + ',' + targetG + ',' + targetB + ', 0.7)';
                         targetCtx.fill();
                         targetCtx.closePath();
                     }

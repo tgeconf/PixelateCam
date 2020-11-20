@@ -23,7 +23,17 @@
         <!-- <canvas id="canvasVideo" width='1024' height='768' style='width:1024px; height: 768px;'></canvas> -->
         <canvas id='canvasContainer' width='1024' height='768' style='width:1024px; height: 768px;'></canvas>
         <canvas id="canvas"></canvas>
-        <svg id="circleContainer" width="1024" height="1024"></svg>
+        <svg id="circleContainer" width="1024" height="768">
+            <filter id="blur1">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+            </filter>
+            <filter id="blur2">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+            </filter>
+            <filter id="blur3">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="1" />
+            </filter>
+        </svg>
     </div>
 </body>
 

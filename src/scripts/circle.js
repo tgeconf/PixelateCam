@@ -15,17 +15,18 @@ export default class Circle {
 
     static rScale(r) {
         const domain = [0, 255];
-        const range = [1, 16];
+        const range = Circle.rRange;
         return range[0] + (range[1] - range[0]) * (r - domain[0]) / (domain[1] - domain[0]);
     }
 
-    static dynamicRScale(r, domain){
+    static dynamicRScale(r, domain) {
         const range = [10, 30];
         return range[0] + (range[1] - range[0]) * (r - domain[0]) / (domain[1] - domain[0]);
     }
 
     static initBigCircle() {
-        Circle.bigCircle = new Circle(60, 939, 0, 36);
+        const r = 36;
+        Circle.bigCircle = new Circle(r * 2, Circle.containerH - r * 2, 0, r);
         Circle.bigCircle.init();
         Circle.bigCircle.ySpeed = 0;
         Circle.bigCircle.xSpeed = 1;
@@ -44,7 +45,7 @@ export default class Circle {
         Circle.bigCircle.circle.setAttributeNS(null, 'cx', Circle.bigCircle.x);
     }
 
-    constructor(x, y, z, r) {
+    constructor(x, y, z, r, color = '#666') {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -55,20 +56,26 @@ export default class Circle {
         this.ySpeed = Math.random();
         this.opacity = 0.5;
         this.circle;
+        this.color = color;
         this.start = { x: x, y: y };
         this.destination = { x: 0, y: 0 };
         this.ctrl = { x: 0, y: 0 };
     }
 
-    init(pushing) {
-        this.destination = { x: Math.random() * 1024, y: Math.random() * 512 };
+    init(pushing, addBlur = false) {
+        this.destination = { x: Math.random() * Circle.containerW, y: Math.random() * Circle.containerH / 2 };
         this.ctrl = { x: this.destination.x, y: this.y };
         this.circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         this.circle.setAttributeNS(null, 'cx', this.x);
         this.circle.setAttributeNS(null, 'cy', this.y);
         this.circle.setAttributeNS(null, 'r', this.r);
+        this.circle.setAttributeNS(null, 'fill', this.color);
+        const tmpRangeStep = (Circle.rRange[1] - Circle.rRange[0]) / 10;
+        if (addBlur) {
+            this.circle.setAttributeNS(null, 'filter', 'url(#blur2)');
+        }
         this.circle.setAttributeNS(null, 'stroke-width', 1);
-        this.circle.setAttributeNS(null, 'fill', '#666');
+        // this.circle.setAttributeNS(null, 'fill', '#666');
         this.circle.setAttributeNS(null, 'opacity', this.opacity);
         document.getElementById('circleContainer').appendChild(this.circle);
         if (pushing) {
@@ -78,7 +85,7 @@ export default class Circle {
     }
 
     update() {
-        this.opacity -= (0.5/this.life);
+        this.opacity -= (0.5 / this.life);
         this.circle.setAttributeNS(null, 'opacity', this.opacity);
 
         const t = this.clock / this.life;
@@ -106,3 +113,6 @@ export default class Circle {
 Circle.circles = [];
 Circle.bigCircle;
 Circle.BigCircleIdx = 0;
+Circle.rRange = [1, 16];
+Circle.containerW = 1024;
+Circle.containerH = 768;
